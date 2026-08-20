@@ -10,8 +10,15 @@ if ~strcmp(bdroot, 'xps_library')
     [hw_sys, hw_subsys] = xps_get_hw_plat(get_param(gcb,'hw_sys'));
     set_param(gcb, 'Name', hw_sys);
 
-    % Model Composers hardware part needs to be set before a simulink 'update' (ctrl-D)
-    vmchub_set_param(vmchub, gcs, 'SelectHardware', hw_subsys);
+    % Model Composer's hardware part must be set before a Simulink update.
+    % Avoid vmchub_get_param here because it initializes the VMC application
+    % and performs an expensive model scan. ProjDevice is persisted directly
+    % on the Hub block and can be read without initializing the application.
+    current_hw_subsys = get_param(vmchub, 'ProjDevice');
+
+    if isempty(current_hw_subsys) || ~strcmp(current_hw_subsys, hw_subsys)
+        vmchub_set_param(vmchub, gcs, 'SelectHardware', hw_subsys);
+    end
 
     % Other mask initialization can be done by calling functions in 'code'
     % section of mask
